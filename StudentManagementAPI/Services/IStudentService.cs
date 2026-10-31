@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.IO;
 using System.Threading.Tasks;
 using StudentManagementAPI.DTOs;
 
@@ -14,6 +15,7 @@ namespace StudentManagementAPI.Services
         Task<ApiResponse<bool>> DeleteStudentAsync(int id);
         Task<ApiResponse<DashboardStatsDto>> GetDashboardAnalyticsAsync();
         Task<byte[]> ExportStudentsToCsvAsync();
+        Task<ApiResponse<BulkImportResultDto>> BulkImportStudentsFromCsvAsync(Stream fileStream);
+        Task<ApiResponse<List<AuditLogDto>>> GetRecentAuditLogsAsync(int count = 20);
     }
 }
-

@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -55,6 +56,9 @@ namespace StudentManagementAPI.Models
         [Column(TypeName = "decimal(4,2)")]
         [Range(0.0, 10.0)]
         public decimal? CGPA { get; set; }
+
+        // Navigation Properties (Relationships)
+        public ICollection<Enrollment> Enrollments { get; set; } = new List<Enrollment>();
+        public ICollection<AttendanceRecord> AttendanceRecords { get; set; } = new List<AttendanceRecord>();
     }
 }
-

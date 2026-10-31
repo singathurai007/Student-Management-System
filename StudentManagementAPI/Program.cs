@@ -46,6 +46,8 @@ else
 // 4. Register Repositories and Services (Dependency Injection)
 builder.Services.AddScoped<IStudentRepository, StudentRepository>();
 builder.Services.AddScoped<IStudentService, StudentService>();
+builder.Services.AddScoped<ICourseService, CourseService>();
+builder.Services.AddScoped<IAttendanceService, AttendanceService>();
 
 // 5. Configure Swagger / OpenAPI Documentation
 builder.Services.AddEndpointsApiExplorer();
@@ -110,4 +112,3 @@ using (var scope = app.Services.CreateScope())
 }
 
 app.Run();
-

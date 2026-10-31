@@ -1,143 +1,124 @@
 # 🎯 Xiphias Software Technologies – .NET Internship Interview Guide (தமிழ்)
 
-இந்த Guide உன்னுடைய **Student Management System** project-ஐ interview-ல் எப்படி விளக்குவது, என்னென்ன கேள்விகள் கேட்பார்கள், அதற்கு எப்படி சிறப்பான பதிலளிப்பது என்பதை முழுமையாகக் கற்பிக்கும்.
+இந்த விரிவான வழிகாட்டி உன்னுடைய **Enterprise Student Management System** project-ல் உள்ள அனைத்து Advanced அம்சங்களையும் interview-ல் தெளிவாக விளக்கி, interview-ல் கேட்கப்படும் கடினமான தொழில்நுட்பக் கேள்விகளுக்கு நம்பிக்கையுடன் பதிலளிக்க உதவும்.
 
 ---
 
 ## 📌 1. Interview-ல் Project-ஐ எப்படி அறிமுகப்படுத்துவது? (Project Pitch)
 
-**Interviewer கேட்கலாம்:** *"Can you explain about the project you built in .NET Core?"*
+**Interviewer கேட்கலாம்:** *"Can you explain the architecture and key features of your .NET project?"*
 
 **உன்னுடைய பதில் (English + Tamil கலந்து சொல்லலாம்):**
 > "I developed an **Enterprise-grade Student Management System** using **ASP.NET Core 8 Web API** and **Entity Framework Core**.
 >
-> சாதாரணமான Basic CRUD Project போல இல்லாமல், industry standard **Layered Architecture (Repository & Service Pattern)**-ஐ பயன்படுத்தியுள்ளேன்.
+> ஒரு சாதாரண Basic CRUD API போல இல்லாமல், உண்மையான IT நிறுவனங்களில் பயன்படுத்தப்படும் **Layered Architecture (Controller &rarr; Service &rarr; Repository)** மற்றும் Relational Database Design-ஐ அமைத்துள்ளேன்.
 >
 > **முக்கிய சிறப்பம்சங்கள் (Key Highlights):**
-> 1. **Clean Separation of Concerns**: Controller &rarr; Service &rarr; Repository &rarr; Database.
-> 2. **Security & DTOs**: Entity Model-ஐ நேரடியாக expose செய்யாமல் DTOs (Data Transfer Objects) மற்றும் Data Annotation Validations பயன்படுத்தியுள்ளேன் (Over-posting protection).
-> 3. **Soft Delete**: மாணவர்களின் records-ஐ permanent-ஆக அழிக்காமல் `IsDeleted` flag மற்றும் EF Core **Global Query Filter** மூலமாக handle செய்துள்ளேன்.
-> 4. **Search, Pagination & Filtering**: அதிக தரவுகளை efficiently load செய்ய Server-side Pagination, Dynamic Sorting மற்றும் Multi-field Search வசதி உண்டு.
-> 5. **Global Exception Handling Middleware**: Server crash ஆகாமல் RFC standard JSON Error Response தரும் Middleware எழுதியுள்ளேன்.
-> 6. **Interactive Dashboard**: API உடன் Bootstrap 5 & Chart.js கொண்ட Responsive Dashboard UI இணைக்கப்பட்டுள்ளது."
+> 1. **Relational Database Design**: 
+>    - `Student` &harr; `Course` இடையே **Many-to-Many Relationship** (via `Enrollment` table with Grade & Semester details).
+>    - `Student` &harr; `AttendanceRecord` இடையே **One-to-Many Relationship**.
+> 2. **Bulk CSV Data Import**: Excel/CSV sheet மூலம் பல மாணவர்களை ஒரே நேரத்தில் validate செய்து batch-ஆக register செய்யும் வசதி (`/api/students/import/csv`).
+> 3. **Attendance & Eligibility Tracking**: மாணவர்களின் தினசரி வருகைப்பதிவு (Attendance) மற்றும் தேர்வு எழுத தகுதி உள்ளதா என்பதை 75% percentage அடிப்படையில் கணக்கிடும் அல்காரிதம்.
+> 4. **Audit Trail Logging**: Database-ல் நடக்கும் ஒவ்வொரு மாற்றமும் (`CREATE`, `UPDATE`, `SOFT_DELETE`, `BULK_IMPORT`) AuditLogs அட்டவணையில் பதிவு செய்யப்படுகிறது.
+> 5. **Soft Delete via Global Query Filters**: Records database-ல் இருந்து நிரந்தரமாக அழியாமல் `IsDeleted` flag மூலம் மறைக்கப்படும்.
+> 6. **Zero-Setup Database**: எந்தவித configuration-ம் இல்லாமல் உடனே ரன் செய்ய **SQLite**-லும், ஒரே வரியில் **Microsoft SQL Server**-க்கும் மாறும் வகையில் அமைக்கப்பட்டுள்ளது."
 
 ---
 
-## 🏗️ 2. Project Architecture விளக்கம்
+## 🏗️ 2. Project Architecture & Database Relationships
 
 ```text
 [ Browser / Swagger UI / Client ]
               │ (HTTP Requests)
               ▼
-    [ StudentsController ]         <-- API Endpoint, HTTP Status Codes
+    [ API Controllers ]           <-- Students, Courses, Attendance, Analytics
               │
               ▼
-      [ StudentService ]           <-- Business Logic, Validations, DTO Mapping
+     [ Business Services ]        <-- Business Logic, DTO Mapping, Bulk CSV Import
               │
               ▼
-    [ StudentRepository ]          <-- LINQ Queries, EF Core Operations
+     [ Repositories / DbContext ] <-- EF Core LINQ, Transactions, Audit Logging
               │
               ▼
-   [ ApplicationDbContext ]        <-- Entity Framework Core ORM
-              │
-              ▼
-   [ SQLite / SQL Server ]         <-- Database Storage
+   [ SQLite / SQL Server ]        <-- Storage
 ```
 
-### ஏன் இந்த Layered Architecture-ஐ தேர்வு செய்தாய்?
-1. **Maintainability**: Controller-ல் database code எழுதாமல் business logic தனியாகவும், data access தனியாகவும் பிரிக்கப்பட்டுள்ளது.
-2. **Reusability**: `IStudentService` மற்றும் `IStudentRepository` interface மூலம் எழுதப்பட்டதால் Unit Testing (Moq) செய்வது மிகவும் எளிது.
-3. **Decoupling**: எதிர்காலத்தில் Database-ஐ SQLite-லிருந்து SQL Server அல்லது PostgreSQL-க்கு மாற்றினாலும் Controller அல்லது Service-ஐ மாற்ற வேண்டிய அவசியமில்லை.
+### Database Entity Relationships (ER Design):
+* **Student (1) &rarr; (M) Enrollment (M) &larr; (1) Course**:
+  - மாணவர் பல பாடங்களை எடுக்கலாம், ஒரு பாடத்தில் பல மாணவர்கள் சேரலாம்.
+  - இதற்காக `Enrollment` என்ற Join Entity உருவாக்கப்பட்டு, அதில் `Semester`, `Grade`, `EnrolledAt` போன்ற கூடுதல் தகவல்கள் சேமிக்கப்படுகின்றன.
+* **Student (1) &rarr; (M) AttendanceRecord**:
+  - ஒவ்வொரு மாணவருக்கும் தினமும் ஒரு வருகை பதிவு (`Present`, `Absent`, `Late`, `OnLeave`).
+* **AuditLog**:
+  - சிஸ்டத்தில் யார் என்ன மாற்றம் செய்தார்கள் என்பதற்கான காலவரிசைப் பதிவு.
 
 ---
 
-## 💡 3. இந்த Project-ல் உள்ள Advanced Features
+## 💡 3. இந்த Project-ல் உள்ள Advanced தலைப்புகள் (Deep Dive)
 
-### அ) Soft Delete (Interviews-ல் அதிகம் விரும்பப்படும் தலைப்பு!)
-- பலரும் `DELETE` method-ல் `context.Students.Remove(student)` என்று Database-ல் இருந்தே அழித்துவிடுவார்கள் (Hard Delete).
-- ஆனால் உண்மையான நிறுவனங்களில் records-ஐ நிரந்தரமாக அழிக்க மாட்டார்கள்.
-- நாம் `BaseEntity`-ல் `IsDeleted = true` என்று மாற்றிவிடுகிறோம்.
-- EF Core `OnModelCreating`-ல்:
+### அ) Eager Loading vs Lazy Loading (EF Core `Include`)
+**கேள்வி:** மாணவர் எடுக்கும் பாடங்களை Database-ல் இருந்து எப்படி எடுக்கிறீர்கள்?
+**பதில்:**
+- நாம் **Eager Loading** பயன்படுத்துகிறோம். EF Core-ல் `.Include(e => e.Course)` மற்றும் `.Include(e => e.Student)` என்று கொடுக்கும் போது, Single SQL `JOIN` Query மூலம் தொடர்புடைய டேட்டாவை உடனே கொண்டுவந்துவிடும்.
+- இது `N+1 Query Problem`-ஐ தடுக்கிறது.
+
+### ஆ) Bulk CSV Import handling (`IFormFile`)
+**கேள்வி:** CSV Upload-ஐ API-ல் எப்படி செய்தீர்கள்?
+**பதில்:**
+- `IFormFile` மூலம் வரும் file stream-ஐ `StreamReader` கொண்டு வரிசையாகப் படித்து validate செய்கிறோம்.
+- Register Number அல்லது Email ஏற்கனவே உள்ளதா என database-ல் சரிபார்த்து, தவறான வரிகளை (Invalid Rows) தனி லிஸ்ட்டாகவும், சரியான மாணவர்களை `AddRangeAsync()` மூலம் batch-ஆக insert செய்கிறோம்.
+- Transaction முடிந்ததும் `AuditLog`-ல் பதிவு செய்யப்படுகிறது.
+
+### இ) Soft Delete (Interviews-ல் அதிகம் பாராட்டப்படும் அம்சம்!)
+- பல தொடக்க நிலை developer-கள் `_context.Students.Remove(student)` (Hard Delete) செய்வார்கள்.
+- ஆனால் enterprise மென்பொருளில் data recovery மற்றும் audit-க்காக `IsDeleted = true` மட்டுமே செய்வார்கள்.
+- EF Core `ApplicationDbContext`-ல் நாம்:
   ```csharp
-  entity.HasQueryFilter(e => !e.IsDeleted);
+  modelBuilder.Entity<Student>().HasQueryFilter(e => !e.IsDeleted);
+  modelBuilder.Entity<Course>().HasQueryFilter(e => !e.IsDeleted);
   ```
-  என்று எழுதியுள்ளோம். இதனால் நாம் எங்கு `_context.Students` என்று call செய்தாலும், deleted records தானாகவே filter ஆகிவிடும்!
+  என்று அமைத்துள்ளதால், நாம் சாதாரணமாக `_context.Students.ToList()` என எழுதினாலும் Deleted ஆன records SQL query-லேயே filter ஆகிவிடும் (`WHERE IsDeleted = 0`).
 
-### ஆ) Data Transfer Objects (DTOs) & Data Annotations
-- **Entity**: Database table-ன் நேரடி பிரதிபலிப்பு.
-- **DTO**: Client-க்கு அனுப்ப வேண்டிய மற்றும் client-டமிருந்து பெற வேண்டிய தேர்ந்தெடுக்கப்பட்ட தரவுகள் மட்டும்.
-- **ஏன் DTO பயன்படுத்த வேண்டும்?**
-  - **Over-posting Attack தடுப்பு**: தேவையில்லாத fields (உதாரணமாக `IsDeleted`, `CreatedAt`, Internal IDs) hacker மாற்றாமல் தடுக்க.
-  - Validation: Email Format, Phone Number Regex, CGPA Range (0-10) போன்றவற்றை API மட்டத்திலேயே சரிபார்க்கலாம்.
-
-### இ) Global Exception Middleware
-- Controller-ல் ஒவ்வொரு முறையும் `try-catch` எழுத வேண்டிய அவசியமில்லை.
-- ஏதேனும் unhandled error வந்தால் `GlobalExceptionMiddleware` அதை catch செய்து, standard JSON response:
-  ```json
-  {
-    "success": false,
-    "message": "An unexpected server error occurred...",
-    "errors": ["Details"],
-    "timestamp": "2026-10-31T10:00:00Z"
-  }
-  ```
-  ஆக மாற்றி 500 Internal Server Error தரும்.
-
-### ஈ) Dual Database Support (Zero Configuration)
-- `appsettings.json`-ல்:
-  `"DatabaseProvider": "Sqlite"` &rarr; SQLite-ல் உடனே இயங்கும் (SQL Server தேவையில்லை).
-  `"DatabaseProvider": "SqlServer"` &rarr; Microsoft SQL Server-க்கு எளிதாக மாற்றிவிடலாம்.
+### ஈ) Dependency Injection Lifetimes
+1. **Transient (`AddTransient`)**: கேட்கும் போதெல்லாம் புதிய object.
+2. **Scoped (`AddScoped`)**: ஒரு HTTP Request முழுவதும் ஒரே instance (நாம் Repository மற்றும் Service-க்கு இதைப் பயன்படுத்துகிறோம்).
+3. **Singleton (`AddSingleton`)**: Application முழுவதும் ஒரே instance.
 
 ---
 
 ## ❓ 4. Top 10 Interview Questions & Model Answers
 
-### Q1: What is Dependency Injection (DI) in ASP.NET Core?
+### Q1: What is the difference between ASP.NET Core and .NET Framework?
 **பதில்:**
-- Dependency Injection என்பது ஒரு Design Pattern. ஒரு class-க்குத் தேவையான object-ஐ அதுவே `new` போட்டு உருவாக்காமல், external container (Inversion of Control - IoC) மூலமாக pass செய்வதாகும்.
-- இதில் 3 Service Lifetimes உள்ளன:
-  1. **Transient**: ஒவ்வொரு முறையும் புதிய instance உருவாக்கப்படும் (`AddTransient`).
-  2. **Scoped**: ஒரு HTTP Request முடிவடையும் வரை ஒரே instance பகிரப்படும் (`AddScoped`). நாம் Repository மற்றும் Service-க்கு `AddScoped` பயன்படுத்தியுள்ளோம்.
-  3. **Singleton**: Application இயங்கும் வரை ஒரே ஒரு instance மட்டுமே இருக்கும் (`AddSingleton`).
+- ASP.NET Core என்பது Cross-Platform (Windows, Linux, macOS-ல் இயங்கும்), High Performance, Modular, மற்றும் Cloud-Ready architecture கொண்டது.
+- பழைய .NET Framework Windows-ல் மட்டுமே இயங்கும்.
 
-### Q2: What is Entity Framework Core (EF Core)?
+### Q2: Why use DTOs instead of passing Entities to Controllers?
 **பதில்:**
-- EF Core என்பது .NET-க்கான Object-Relational Mapper (ORM).
-- SQL queries (`SELECT * FROM Students`) எழுதாமல், C# Objects மற்றும் LINQ (`_context.Students.Where(s => s.Year == 2)`) மூலமாக database உடன் பேச உதவுகிறது.
-- நாம் **Code-First Approach** பயன்படுத்தியுள்ளோம். அதாவது C# Classes எழுதி, அதிலிருந்து Database Tables உருவாக்கப்படுகின்றன.
+1. **Security (Over-posting protection)**: Hacker ஒரு மாணவரின் தகவலை update செய்யும் போது `IsDeleted = false` அல்லது `Id = 99` என்று அனுப்பினால் entity-யை நேரடியாகப் பயன்படுத்தினால் hacker நினைத்தது நடந்துவிடும். DTO பயன்படுத்துவதால் அனுமதிக்கப்பட்ட fields மட்டுமே மாறும்.
+2. **Decoupling**: Database schema மாறினாலும் Client API contract மாறாது.
 
-### Q3: What is the difference between `IEnumerable` and `IQueryable`?
+### Q3: What is Global Exception Middleware?
 **பதில்:**
-- `IEnumerable`: In-memory data collections-க்கு பயன்படும். Database-ல் இருந்து எல்லா records-ஐயும் memory-க்கு கொண்டு வந்த பிறகே filter செய்யும் (Client-side evaluation).
-- `IQueryable`: Database queries-க்கு பயன்படும். LINQ expression tree ஆக மாறி SQL Query-ஆக Server-ல் சென்று execute ஆகும் (Server-side evaluation). அதனால் performance மிக அதிகமாக இருக்கும்.
+- ஒவ்வொரு controller action-லும் `try-catch` எழுதுவதற்குப் பதிலாக, ASP.NET Core request pipeline-ல் ஒரு centralized middleware அமைத்து, ஏதேனும் unhandled exception வந்தால் அதை catch செய்து, standard JSON response ஆக (HTTP 500) அனுப்புகிறோம்.
 
-### Q4: Why use `async` and `await` in API Controller/Service?
+### Q4: How is attendance percentage computed?
 **பதில்:**
-- Database call அல்லது Network call நடக்கும் போது Thread Block ஆகாமல் இருக்க Asynchronous programming பயன்படுகிறது.
-- `Task<IActionResult>`, `SaveChangesAsync()` பயன்படுத்துவதால் குறைவான server resources-ல் ஆயிரக்கணக்கான பயனர்களின் requests-ஐ handle செய்ய முடிகிறது.
-
-### Q5: What are the common HTTP Methods and Status Codes used?
-**பதில்:**
-- `GET /api/students` &rarr; 200 OK
-- `POST /api/students` &rarr; 201 Created (with `CreatedAtAction`)
-- Invalid Input &rarr; 400 Bad Request
-- Record Not Found &rarr; 404 Not Found
-- Duplicate Reg Number &rarr; 400 Bad Request / 409 Conflict
-- Server Error &rarr; 500 Internal Server Error
+- ஒரு மாணவரின் மொத்த நாட்கள் (`TotalDays`), அதில் வந்த நாட்கள் (`PresentDays`) மற்றும் பாதி நாள் கணக்கீடான (`LateDays * 0.5`) கொண்டு:
+  $$\text{Percentage} = \frac{\text{Present} + (\text{Late} \times 0.5)}{\text{Total}} \times 100$$
+  என்ற formula மூலம் calculate செய்யப்படுகிறது. 75%-க்கு மேல் இருந்தால் Semester Exam-க்கு தகுதியானவர் என்று UI-ல் காட்டப்படுகிறது.
 
 ---
 
-## 💻 5. Step-by-Step Demo Walkthrough (Interview நேரத்திற்கு)
+## 💻 5. Step-by-Step Interview Demo Walkthrough
 
-1. Command Prompt அல்லது Terminal-ல்:
+1. Terminal-ல்:
    ```powershell
    cd C:\Users\ELCOT\Desktop\StudentManagementSystem\StudentManagementAPI
    dotnet run
    ```
-2. Browser-ல் [http://localhost:5000](http://localhost:5000)-ஐ திறக்கவும்:
-   - Dashboard-ல் Total Students, Department Distribution Chart காண்பிக்கப்படும்.
-3. [http://localhost:5000/swagger](http://localhost:5000/swagger)-ஐ திறந்து:
-   - `GET /api/students` execute செய்து pagination மற்றும் search parameter-ஐ காண்பிக்கவும்.
-   - `POST /api/students` மூலமாக ஒரு மாணவரை பதிவு செய்து காண்பிக்கவும்.
-   - `DELETE /api/students/{id}` செய்துவிட்டு, Database-ல் record அழியாமல் `IsDeleted = true` ஆவதை விளக்கலாம்.
-
+2. Browser-ல் [http://localhost:5000](http://localhost:5000) திறந்து:
+   - **Students Tab**: Filter, Pagination, CSV Export மற்றும் "Bulk Import CSV" பட்டனை demo செய்து காட்டலாம்.
+   - **Courses Tab**: புதிய பாடம் உருவாக்குவது மற்றும் மாணவரை அதில் enroll செய்வது.
+   - **Attendance Tracker Tab**: தேதியைத் தேர்ந்தெடுத்து வருகைப்பதிவு செய்வது மற்றும் மாணவரின் வருகை சதவீதத்தை (75% Exam Eligibility) பார்ப்பது.
+   - **Audit Logs Tab**: இதுவரை நடந்த அனைத்து நடவடிக்கைகளும் பதிவாகியிருப்பதை நேர்காணல் செய்பவருக்குக் காட்டி வியக்க வைக்கலாம்!

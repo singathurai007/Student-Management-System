@@ -137,6 +137,42 @@ namespace StudentManagementAPI.Controllers
             var bytes = await _studentService.ExportStudentsToCsvAsync();
             return File(bytes, "text/csv", $"Students_{System.DateTime.UtcNow:yyyyMMdd_HHmm}.csv");
         }
+
+        /// <summary>
+        /// Bulk imports student records from a CSV file
+        /// Expected CSV Header: Name,RegisterNumber,Email,Department,Year,Phone,CGPA
+        /// </summary>
+        [HttpPost("import/csv")]
+        [Consumes("multipart/form-data")]
+        [ProducesResponseType(typeof(ApiResponse<BulkImportResultDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiResponse<BulkImportResultDto>), StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> BulkImport(IFormFile file)
+        {
+            if (file == null || file.Length == 0)
+            {
+                return BadRequest(ApiResponse<BulkImportResultDto>.Fail("Please upload a valid non-empty CSV file."));
+            }
+
+            if (!file.FileName.EndsWith(".csv", System.StringComparison.OrdinalIgnoreCase))
+            {
+                return BadRequest(ApiResponse<BulkImportResultDto>.Fail("Only .csv files are supported."));
+            }
+
+            using var stream = file.OpenReadStream();
+            var result = await _studentService.BulkImportStudentsFromCsvAsync(stream);
+
+            return Ok(result);
+        }
+
+        /// <summary>
+        /// Retrieves the latest audit activity logs
+        /// </summary>
+        [HttpGet("audit-logs")]
+        [ProducesResponseType(typeof(ApiResponse<System.Collections.Generic.List<AuditLogDto>>), StatusCodes.Status200OK)]
+        public async Task<IActionResult> GetAuditLogs([FromQuery] int count = 25)
+        {
+            var result = await _studentService.GetRecentAuditLogsAsync(count);
+            return Ok(result);
+        }
     }
 }
-

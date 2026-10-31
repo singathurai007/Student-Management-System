@@ -28,6 +28,20 @@ body {
   margin-left: 8px;
 }
 
+.nav-pills .nav-link {
+  color: var(--secondary-color);
+  font-weight: 500;
+  border-radius: 8px;
+  padding: 8px 16px;
+  transition: all 0.2s ease;
+}
+
+.nav-pills .nav-link.active {
+  background-color: var(--primary-color);
+  color: #fff;
+  box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2);
+}
+
 .stat-card {
   background: var(--card-bg);
   border-radius: 12px;
@@ -89,10 +103,11 @@ body {
   border-radius: 20px;
 }
 
-.badge-active { background-color: #dcfce7; color: #15803d; }
-.badge-inactive { background-color: #f1f5f9; color: #475569; }
+.badge-active, .badge-present { background-color: #dcfce7; color: #15803d; }
+.badge-inactive, .badge-excused { background-color: #f1f5f9; color: #475569; }
 .badge-graduated { background-color: #dbeafe; color: #1d4ed8; }
-.badge-suspended { background-color: #fee2e2; color: #b91c1c; }
+.badge-suspended, .badge-absent { background-color: #fee2e2; color: #b91c1c; }
+.badge-late { background-color: #fef3c7; color: #b45309; }
 
 .action-btn {
   width: 32px;
@@ -120,3 +135,14 @@ body {
   box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04);
 }
 
+.course-card {
+  border-radius: 10px;
+  border: 1px solid var(--border-color);
+  background: #fff;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.course-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.08);
+}
