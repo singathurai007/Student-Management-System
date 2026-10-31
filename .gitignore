@@ -1,0 +1,17 @@
+## Visual Studio & .NET Core GitIgnore
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+.vs/
+.vscode/
+*.user
+*.userosscache
+*.sln.docstates
+*.suo
+*.userprefs
+*.db
+*.db-shm
+*.db-wal
+appsettings.Development.json
+StudentManagement.db*
