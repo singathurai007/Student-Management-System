@@ -128,5 +128,3 @@ To switch to **Microsoft SQL Server**:
 
 ---
 
-## 📖 Tamil Interview Guide
-Refer to **`INTERVIEW_GUIDE_TAMIL.md`** located in the root folder for step-by-step interview explanations, architecture justification, and common .NET Core interview questions.
